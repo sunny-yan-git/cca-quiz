@@ -1,9 +1,10 @@
-from pydantic import BaseModel
-from typing import List, Optional
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel
 
 
-class Difficulty(str, Enum):
+class DifficultyLevel(str, Enum):
     easy = "easy"
     medium = "medium"
     hard = "hard"
@@ -16,16 +17,27 @@ class AnswerOption(BaseModel):
 
 class Question(BaseModel):
     id: str
-    topic: str
-    difficulty: Difficulty
+    domain: str
+    scenario: str
+    difficulty: DifficultyLevel
+    scenario_context: str
     question: str
     options: List[AnswerOption]
     correct_answer: str
     explanation: str
 
 
-class QuizRequest(BaseModel):
-    topic: Optional[str] = None
-    difficulty: Optional[Difficulty] = None
-    count: int = 10
-    use_weights: bool = False
+class QuestionRequest(BaseModel):
+    domain: Optional[str] = None
+    difficulty: DifficultyLevel = DifficultyLevel.medium
+    session_id: str
+
+
+class QuestionResponse(BaseModel):
+    id: str
+    domain: str
+    scenario: str
+    difficulty: DifficultyLevel
+    scenario_context: str
+    question: str
+    options: List[AnswerOption]

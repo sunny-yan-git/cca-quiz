@@ -1,21 +1,41 @@
+from typing import Dict, List, Optional
+
 from pydantic import BaseModel
-from typing import List, Optional
+
+from app.models.question import DifficultyLevel
 
 
-class AnswerRecord(BaseModel):
+class AnswerRequest(BaseModel):
     question_id: str
-    topic: str
-    selected: str
-    correct: str
-    is_correct: bool
+    session_id: str
+    selected_answer: str
+    domain: str
+    difficulty: DifficultyLevel
 
 
-class QuizSession(BaseModel):
+class AnswerResult(BaseModel):
+    correct: bool
+    correct_answer: str
+    explanation: str
+    domain: str
+
+
+class DomainScore(BaseModel):
+    domain: str
+    correct: int
+    total: int
+    accuracy: float
+
+
+class SessionScore(BaseModel):
     session_id: str
     timestamp: str
-    total: int
-    correct: int
-    score_pct: float
-    answers: List[AnswerRecord]
-    topic_filter: Optional[str] = None
-    difficulty_filter: Optional[str] = None
+    domain_scores: Dict[str, DomainScore]
+    questions_answered: int
+
+
+class ScoresSummary(BaseModel):
+    sessions: List[SessionScore]
+    overall_accuracy: float
+    domain_accuracies: Dict[str, float]
+    weakest_domain: Optional[str] = None

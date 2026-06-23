@@ -1,115 +1,114 @@
 import json
+import os
 import uuid
-from typing import List, Optional
+from pathlib import Path
+from typing import Optional
 
 import anthropic
 
-from app.config import settings
-from app.models.question import Difficulty
+from app.models.question import AnswerOption, DifficultyLevel, Question
 
-_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+_client = anthropic.AsyncAnthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
-_QUESTION_TOOL = {
-    "name": "return_questions",
-    "description": "Return a list of generated multiple-choice exam questions.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "questions": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "required": ["topic", "difficulty", "question", "options", "correct_answer", "explanation"],
-                    "properties": {
-                        "topic": {"type": "string"},
-                        "difficulty": {"type": "string", "enum": ["easy", "medium", "hard"]},
-                        "question": {"type": "string"},
-                        "options": {
-                            "type": "array",
-                            "minItems": 4,
-                            "maxItems": 4,
-                            "items": {
-                                "type": "object",
-                                "required": ["id", "text"],
-                                "properties": {
-                                    "id": {"type": "string", "enum": ["A", "B", "C", "D"]},
-                                    "text": {"type": "string"},
-                                },
-                            },
-                        },
-                        "correct_answer": {"type": "string", "enum": ["A", "B", "C", "D"]},
-                        "explanation": {"type": "string"},
-                    },
-                },
-            }
-        },
-        "required": ["questions"],
-    },
+_MODEL = "claude-sonnet-4-6"
+
+_SYSTEM_PROMPT = """\
+You are a CCA-F (Claude Certified Architect – Foundations) exam question writer.
+
+Your output must be a single valid JSON object — no markdown, no prose, no code fences.
+The JSON must match this exact schema:
+
+{
+  "domain": "<one of the five CCA-F domain names>",
+  "scenario": "<short snake_case scenario label, e.g. multi-agent-research>",
+  "difficulty": "<easy | medium | hard>",
+  "scenario_context": "<2–4 sentence paragraph setting up the scenario>",
+  "question": "<the question stem>",
+  "options": [
+    {"id": "A", "text": "<option text>"},
+    {"id": "B", "text": "<option text>"},
+    {"id": "C", "text": "<option text>"},
+    {"id": "D", "text": "<option text>"}
+  ],
+  "correct_answer": "<A | B | C | D>",
+  "explanation": "<why the correct answer is right AND why the main distractor is wrong>"
 }
 
-_SYSTEM_PROMPT = """You are a CCA-F (Claude Certified Architect – Foundations) exam question writer.
-
-CCA-F domains:
-1. Claude Model Capabilities & Limitations
-2. Prompt Engineering & Context Management
-3. Claude API & SDK Integration
-4. Safety, Alignment & Constitutional AI
-5. Multi-agent Systems & Tool Use
-6. Responsible AI Deployment & Ethics
-
-Rules for questions:
-- Each question must be unambiguous with exactly one correct answer.
-- Distractors (wrong options) should be plausible but clearly incorrect to a well-prepared candidate.
-- Explanations must explain WHY the correct answer is right AND why the main distractor is wrong.
-- Questions should test understanding, not trivia memorization.
-- Use realistic architect-level scenarios where possible.
+Rules:
+- Exactly one correct answer; distractors must be plausible but clearly wrong to a prepared candidate.
+- Explanations must address both the correct answer and the strongest distractor.
+- Questions test architectural understanding and judgment, not trivia memorization.
+- Ground every question in the exam guide content provided in the user message.
 """
 
 
-async def generate_questions(
-    count: int,
-    topic: Optional[str],
-    difficulty: Optional[Difficulty],
-    topic_weights: Optional[dict] = None,
-) -> List[dict]:
-    topic_instruction = f"Focus exclusively on the topic: {topic}." if topic else "Mix questions across all six CCA-F domains."
-    difficulty_instruction = f"All questions must be {difficulty.value} difficulty." if difficulty else "Mix easy, medium, and hard difficulties."
+def _parse_question(text: str) -> Optional[Question]:
+    """Extract and parse a JSON Question from a model response string."""
+    # Strip optional markdown code fences
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        stripped = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
 
-    weight_instruction = ""
-    if topic_weights:
-        low_topics = [t for t, w in topic_weights.items() if w > 1.0]
-        if low_topics:
-            weight_instruction = f"Prioritize these weak-area topics: {', '.join(low_topics)}."
+    try:
+        data = json.loads(stripped)
+    except json.JSONDecodeError:
+        return None
 
+    try:
+        data["id"] = f"gen-{uuid.uuid4().hex[:8]}"
+        data["options"] = [AnswerOption(**opt) for opt in data["options"]]
+        data["difficulty"] = DifficultyLevel(data["difficulty"])
+        return Question(**data)
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+async def _call_claude(user_message: str) -> str:
+    response = await _client.messages.create(
+        model=_MODEL,
+        max_tokens=1000,
+        system=_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_message}],
+    )
+    return response.content[0].text
+
+
+async def generate_question(
+    domain: Optional[str],
+    difficulty: str,
+    exam_guide_content: str,
+) -> Optional[Question]:
+    domain_line = (
+        f"Domain: {domain}" if domain else "Choose the domain most appropriate for variety."
+    )
     user_message = (
-        f"Generate exactly {count} multiple-choice questions for the CCA-F exam.\n"
-        f"{topic_instruction}\n"
-        f"{difficulty_instruction}\n"
-        f"{weight_instruction}\n"
-        "Call the return_questions tool with your response."
+        f"{domain_line}\n"
+        f"Difficulty: {difficulty}\n\n"
+        f"<exam_guide>\n{exam_guide_content}\n</exam_guide>\n\n"
+        "Generate one CCA-F exam question. Return only the JSON object."
     )
 
     try:
-        response = await _client.messages.create(
-            model=settings.model,
-            max_tokens=4096,
-            system=_SYSTEM_PROMPT,
-            tools=[_QUESTION_TOOL],
-            tool_choice={"type": "tool", "name": "return_questions"},
-            messages=[{"role": "user", "content": user_message}],
-        )
+        text = await _call_claude(user_message)
     except anthropic.APIError as exc:
         raise RuntimeError(f"Anthropic API error: {exc}") from exc
 
-    tool_block = next(
-        (block for block in response.content if block.type == "tool_use"),
-        None,
-    )
-    if tool_block is None:
-        raise RuntimeError("Claude did not return a tool_use block.")
+    question = _parse_question(text)
+    if question is not None:
+        return question
 
-    raw_questions: List[dict] = tool_block.input.get("questions", [])
-    for q in raw_questions:
-        q["id"] = f"gen-{uuid.uuid4().hex[:8]}"
+    # Retry once on parse failure
+    try:
+        text = await _call_claude(user_message)
+    except anthropic.APIError as exc:
+        raise RuntimeError(f"Anthropic API error on retry: {exc}") from exc
 
-    return raw_questions
+    return _parse_question(text)
+
+
+def load_exam_guide() -> str:
+    path = Path(__file__).parents[3] / ".claude" / "rules" / "exam-content.md"
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8")

@@ -3,18 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import quiz, scores
 
-app = FastAPI(title="CCA-F Exam Simulator API", version="0.1.0")
+app = FastAPI(title="CCA-F Exam Simulator API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(quiz.router, prefix="/api")
-app.include_router(scores.router, prefix="/api")
+app.include_router(quiz.router, prefix="/quiz")
+app.include_router(scores.router, prefix="/scores")
 
 
 @app.get("/health")

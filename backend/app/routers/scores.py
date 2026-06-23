@@ -1,20 +1,28 @@
-from typing import List
+from fastapi import APIRouter, HTTPException
 
-from fastapi import APIRouter
-
-from app.models.score import QuizSession
+from app.models.score import AnswerRequest, AnswerResult, ScoresSummary
 from app.services import question_service
 
 router = APIRouter(prefix="/scores", tags=["scores"])
 
 
-@router.post("", response_model=dict)
-async def save_score(session: QuizSession):
-    question_service.append_score(session)
-    return {"session_id": session.session_id}
+@router.post("", response_model=AnswerResult)
+async def submit_answer(req: AnswerRequest):
+    question = question_service.get_question_by_id(req.question_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail=f"Question '{req.question_id}' not found.")
+
+    correct = req.selected_answer == question.correct_answer
+    question_service.write_answer_result(req.session_id, req, correct)
+
+    return AnswerResult(
+        correct=correct,
+        correct_answer=question.correct_answer,
+        explanation=question.explanation,
+        domain=question.domain,
+    )
 
 
-@router.get("", response_model=List[QuizSession])
+@router.get("", response_model=ScoresSummary)
 async def get_scores():
-    raw = question_service.load_scores()
-    return [QuizSession(**s) for s in raw]
+    return question_service.read_scores()
