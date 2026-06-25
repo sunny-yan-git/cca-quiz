@@ -1,5 +1,3 @@
-import random
-
 from fastapi import APIRouter, HTTPException
 
 from app.models.question import QuestionRequest, QuestionResponse
@@ -11,18 +9,15 @@ router = APIRouter(tags=["quiz"])
 
 @router.post("/generate", response_model=QuestionResponse)
 async def generate_question(req: QuestionRequest):
-    question = None
-
-    if random.random() < 0.7:
-        exam_guide = claude_service.load_exam_guide()
-        try:
-            question = await claude_service.generate_question(
-                domain=req.domain,
-                difficulty=req.difficulty.value,
-                exam_guide_content=exam_guide,
-            )
-        except RuntimeError as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
+    exam_guide = claude_service.load_exam_guide()
+    try:
+        question = await claude_service.generate_question(
+            domain=req.domain,
+            difficulty=req.difficulty.value,
+            exam_guide_content=exam_guide,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
 
     if question is None:
         question = question_service.get_random_question(
@@ -31,7 +26,7 @@ async def generate_question(req: QuestionRequest):
         )
 
     if question is None:
-        raise HTTPException(status_code=404, detail="No question available for the requested filters.")
+        raise HTTPException(status_code=503, detail="No questions available")
 
     cache_question(question)
     return QuestionResponse(

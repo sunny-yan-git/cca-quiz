@@ -36,7 +36,9 @@ def get_question_by_id(question_id: str) -> Optional[Question]:
 
 
 def get_random_question(
-    domain: Optional[str], difficulty: Optional[str]
+    domain: Optional[str],
+    difficulty: Optional[str],
+    exclude_ids: list[str] | None = None,
 ) -> Optional[Question]:
     effective_domain = domain
     if effective_domain is None:
@@ -51,6 +53,9 @@ def get_random_question(
         questions = [q for q in questions if q.domain == effective_domain]
     if difficulty:
         questions = [q for q in questions if q.difficulty.value == difficulty]
+    if exclude_ids:
+        excluded = set(exclude_ids)
+        questions = [q for q in questions if q.id not in excluded]
 
     if not questions:
         return None

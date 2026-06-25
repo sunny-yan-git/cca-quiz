@@ -10,7 +10,7 @@ Study tool that dynamically generates CCA-F (Claude Certified Architect – Foun
 - **Data**: Local JSON files in `data/` (no database)
 
 ## Key Directories
-- `data/question_bank.json` — seed question bank; also used as fallback if API is unavailable
+- `data/question_bank.json` — seed question bank; served only as fallback if Claude API generation fails
 - `data/scores.json` — append-only quiz session history
 - `backend/app/services/claude_service.py` — all Anthropic API calls live here
 - `frontend/src/hooks/useQuiz.js` — quiz state machine (fetch → answer → score → review)
@@ -29,6 +29,9 @@ Backend runs on `http://localhost:8000`; frontend dev server proxies `/api` to i
 ## Environment Variables
 - `backend/.env` — `ANTHROPIC_API_KEY`, `MODEL`, `DATA_DIR`
 - `frontend/.env` — `VITE_API_BASE_URL` (defaults to `/api` via Vite proxy)
+
+## Question Generation
+Question generation uses pure dynamic Claude API generation with seed bank fallback. Seed bank is only served if the API call fails after one retry. Session deduplication prevents repeat questions within a session.
 
 ## CCA-F Exam Domains
 1. Agentic Architecture & Orchestration - 27%

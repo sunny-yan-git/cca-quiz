@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { fetchTopics, fetchScores } from '../services/api'
 
 const DIFFICULTIES = ['easy', 'medium', 'hard']
-const COUNTS = [5, 10, 15]
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -94,23 +93,21 @@ export default function HomePage() {
 
           {/* Count */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Questions</label>
-            <div className="flex gap-2">
-              {COUNTS.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setCount(n)}
-                  className={[
-                    'flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition-colors',
-                    count === n
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-slate-200 text-slate-500 hover:border-indigo-300',
-                  ].join(' ')}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">
+              Questions: {count}
+            </label>
+            <input
+              type="number"
+              min={5}
+              max={50}
+              step={5}
+              value={count}
+              onChange={(e) => {
+                const v = Math.min(50, Math.max(5, Number(e.target.value) || 5))
+                setCount(v)
+              }}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
           </div>
 
           <button
