@@ -10,6 +10,11 @@ This rule is always active. When generating questions, validating content, or di
 - Error handling and retry strategies in agent pipelines
 - Computer use and browser automation agents
 - Agent state management and memory across turns
+- Task tool as the mechanism for spawning subagents; `allowedTools` must include `"Task"` for a coordinator to invoke subagents
+- Subagents do not inherit parent context automatically — context must be explicitly provided in the subagent prompt
+- Agent SDK hooks: `PostToolUse` hooks for intercepting and transforming tool results; tool call interception hooks for blocking policy-violating actions (e.g. refunds above a threshold)
+- Distinction between hooks (deterministic guarantees) vs prompt instructions (probabilistic compliance)
+- Session forking: `fork_session` for branching from a shared baseline; named session resumption with `--resume <session-name>`
 
 ## Domain 2 — Tool Design & MCP Integration (22%)
 - Tool definitions: name, description, input_schema best practices
@@ -19,6 +24,9 @@ This rule is always active. When generating questions, validating content, or di
 - Model Context Protocol (MCP): servers, resources, prompts, tools
 - MCP transport types (stdio, SSE) and client configuration
 - Designing tools for reliability: schema precision, idempotency
+- Tool overload anti-pattern: giving an agent too many tools (e.g. 18 vs 4–5 focused tools) degrades tool selection reliability
+- Agents with tools outside their specialization tend to misuse them
+- Scoped tool access: give each agent only the tools needed for its specific role
 
 ## Domain 3 — Claude Code Configuration (18%)
 - CLAUDE.md: purpose, location hierarchy (repo root, subdir, home)
@@ -28,6 +36,8 @@ This rule is always active. When generating questions, validating content, or di
 - Settings files: `settings.json` vs `settings.local.json`, permission config
 - Claude Code CLI flags and environment variable overrides
 - MCP server configuration in Claude Code settings
+- `@import` syntax in CLAUDE.md for referencing external files to keep configuration modular
+- `/memory` command for verifying which memory files are loaded in a session
 
 ## Domain 4 — Prompt Engineering & Structured Output (20%)
 - System prompt vs human turn responsibilities

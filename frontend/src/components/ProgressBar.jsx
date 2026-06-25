@@ -1,16 +1,22 @@
-export default function ProgressBar({ current, total }) {
-  const pct = Math.round(((current + 1) / total) * 100)
+export default function ProgressBar({ current, total, history = [] }) {
   return (
-    <div className="w-full">
-      <div className="flex justify-between text-sm text-slate-500 mb-1">
+    <div className="w-full space-y-2">
+      <div className="flex justify-between text-sm text-slate-500">
         <span>Question {current + 1} of {total}</span>
-        <span>{pct}%</span>
+        <span>{history.filter(Boolean).length} / {history.length} correct</span>
       </div>
-      <div className="w-full bg-slate-200 rounded-full h-2">
-        <div
-          className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${pct}%` }}
-        />
+      <div className="flex gap-1">
+        {Array.from({ length: total }).map((_, i) => {
+          let cls = 'h-2.5 flex-1 rounded-full transition-colors'
+          if (i < history.length) {
+            cls += history[i] ? ' bg-green-500' : ' bg-red-400'
+          } else if (i === current) {
+            cls += ' bg-indigo-500'
+          } else {
+            cls += ' bg-slate-200'
+          }
+          return <div key={i} className={cls} />
+        })}
       </div>
     </div>
   )

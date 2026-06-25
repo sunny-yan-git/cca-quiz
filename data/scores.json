@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "session_id": "c835960a-db94-4012-8696-ea82ff4429f9",
+    "timestamp": "2026-06-24T16:29:08.112227+00:00",
+    "question_id": "gen-e0c1f16f",
+    "domain": "general",
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "c835960a-db94-4012-8696-ea82ff4429f9",
+    "timestamp": "2026-06-25T15:27:41.573493+00:00",
+    "question_id": "gen-002c04be",
+    "domain": "general",
+    "difficulty": "medium",
+    "selected_answer": "C",
+    "correct": true
+  },
+  {
+    "session_id": "c835960a-db94-4012-8696-ea82ff4429f9",
+    "timestamp": "2026-06-25T18:41:50.742031+00:00",
+    "question_id": "gen-c6f23a46",
+    "domain": "general",
+    "difficulty": "medium",
+    "selected_answer": "A",
+    "correct": false
+  },
+  {
+    "session_id": "c835960a-db94-4012-8696-ea82ff4429f9",
+    "timestamp": "2026-06-25T18:42:38.712264+00:00",
+    "question_id": "q006",
+    "domain": "general",
+    "difficulty": "medium",
+    "selected_answer": "C",
+    "correct": false
+  },
+  {
+    "session_id": "c835960a-db94-4012-8696-ea82ff4429f9",
+    "timestamp": "2026-06-25T18:43:01.941792+00:00",
+    "question_id": "q005",
+    "domain": "general",
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "c835960a-db94-4012-8696-ea82ff4429f9",
+    "timestamp": "2026-06-25T18:44:12.484370+00:00",
+    "question_id": "q005",
+    "domain": "general",
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  }
+]

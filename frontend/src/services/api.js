@@ -1,30 +1,59 @@
-import axios from 'axios'
+const BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
-const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-})
-
-export async function fetchTopics() {
-  const { data } = await client.get('/quiz/topics')
-  return data
+function getSessionId() {
+  const key = 'quiz_session_id'
+  let id = sessionStorage.getItem(key)
+  if (!id) {
+    id = crypto.randomUUID()
+    sessionStorage.setItem(key, id)
+  }
+  return id
 }
 
-export async function generateQuiz({ topic, difficulty, count, useWeights = false }) {
-  const { data } = await client.post('/quiz/generate', {
-    topic: topic || null,
-    difficulty: difficulty || null,
-    count,
-    use_weights: useWeights,
+async function request(path, init = {}) {
+  const res = await fetch(`${BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...init,
   })
-  return data
+  if (!res.ok) {
+    let detail = res.statusText
+    try {
+      const body = await res.json()
+      detail = body.detail ?? JSON.stringify(body)
+    } catch (_) {}
+    throw new Error(`${res.status} ${detail}`)
+  }
+  return res.json()
 }
 
-export async function saveScore(session) {
-  const { data } = await client.post('/scores', session)
-  return data
+export function fetchQuestion(domain, difficulty) {
+  return request('/quiz/generate', {
+    method: 'POST',
+    body: JSON.stringify({
+      domain: domain || null,
+      difficulty: difficulty || 'medium',
+      session_id: getSessionId(),
+    }),
+  })
 }
 
-export async function fetchScores() {
-  const { data } = await client.get('/scores')
-  return data
+export function submitAnswer(questionId, selectedAnswer, domain, difficulty) {
+  return request('/scores', {
+    method: 'POST',
+    body: JSON.stringify({
+      question_id: questionId,
+      session_id: getSessionId(),
+      selected_answer: selectedAnswer,
+      domain: domain || 'general',
+      difficulty,
+    }),
+  })
+}
+
+export function fetchScores() {
+  return request('/scores')
+}
+
+export function fetchTopics() {
+  return request('/quiz/topics')
 }

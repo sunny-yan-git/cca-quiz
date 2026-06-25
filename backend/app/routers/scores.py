@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.models.score import AnswerRequest, AnswerResult, ScoresSummary
 from app.services import question_service
 
-router = APIRouter(prefix="/scores", tags=["scores"])
+router = APIRouter(tags=["scores"])
 
 
 @router.post("", response_model=AnswerResult)

@@ -10,6 +10,12 @@ from app.models.score import AnswerRequest, DomainScore, ScoresSummary, SessionS
 
 _DATA_DIR = Path(os.getenv("DATA_DIR", "../data"))
 
+_question_cache: dict[str, Question] = {}
+
+
+def cache_question(question: Question) -> None:
+    _question_cache[question.id] = question
+
 
 def _path(filename: str) -> Path:
     return _DATA_DIR / filename
@@ -24,10 +30,9 @@ def get_all_questions() -> list[Question]:
 
 
 def get_question_by_id(question_id: str) -> Optional[Question]:
-    for q in get_all_questions():
-        if q.id == question_id:
-            return q
-    return None
+    if question_id in _question_cache:
+        return _question_cache[question_id]
+    return next((q for q in get_all_questions() if q.id == question_id), None)
 
 
 def get_random_question(

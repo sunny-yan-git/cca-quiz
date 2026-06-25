@@ -9,7 +9,7 @@ class AnswerRequest(BaseModel):
     question_id: str
     session_id: str
     selected_answer: str
-    domain: str
+    domain: Optional[str] = None
     difficulty: DifficultyLevel
 
 

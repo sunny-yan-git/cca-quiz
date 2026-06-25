@@ -1,100 +1,90 @@
 import { useState, useCallback } from 'react'
-import { generateQuiz, saveScore } from '../services/api'
+import { fetchQuestion, submitAnswer } from '../services/api'
 
 const initialState = {
-  status: 'idle', // idle | loading | active | finished
-  questions: [],
-  currentIndex: 0,
-  answers: {},
+  status: 'idle',      // idle | loading | active | reviewing | finished
+  question: null,
+  result: null,        // { correct, correct_answer, explanation, domain }
+  score: { correct: 0, total: 0 },
+  domain: null,
+  difficulty: 'medium',
   error: null,
 }
 
 export function useQuiz() {
   const [state, setState] = useState(initialState)
 
-  const start = useCallback(async ({ topic, difficulty, count, useWeights }) => {
-    setState((s) => ({ ...s, status: 'loading', error: null }))
+  const start = useCallback(async (domain, difficulty = 'medium') => {
+    setState({ ...initialState, status: 'loading', domain, difficulty })
     try {
-      const questions = await generateQuiz({ topic, difficulty, count, useWeights })
-      setState({
-        status: 'active',
-        questions,
-        currentIndex: 0,
-        answers: {},
-        error: null,
-      })
+      const question = await fetchQuestion(domain, difficulty)
+      setState((s) => ({ ...s, status: 'active', question }))
     } catch (err) {
       setState((s) => ({ ...s, status: 'idle', error: err.message }))
     }
   }, [])
 
-  const answer = useCallback((questionId, selected) => {
-    setState((s) => ({
-      ...s,
-      answers: { ...s.answers, [questionId]: selected },
-    }))
-  }, [])
-
-  const next = useCallback(() => {
-    setState((s) => ({
-      ...s,
-      currentIndex: Math.min(s.currentIndex + 1, s.questions.length - 1),
-    }))
-  }, [])
-
-  const prev = useCallback(() => {
-    setState((s) => ({
-      ...s,
-      currentIndex: Math.max(s.currentIndex - 1, 0),
-    }))
-  }, [])
-
-  const submit = useCallback(async ({ topicFilter, difficultyFilter }) => {
-    setState((s) => {
-      const answerRecords = s.questions.map((q) => ({
-        question_id: q.id,
-        topic: q.topic,
-        selected: s.answers[q.id] || '',
-        correct: q.correct_answer,
-        is_correct: s.answers[q.id] === q.correct_answer,
+  const answer = useCallback(async (selectedAnswer) => {
+    if (!state.question) return
+    setState((s) => ({ ...s, status: 'loading' }))
+    try {
+      const result = await submitAnswer(
+        state.question.id,
+        selectedAnswer,
+        state.domain,
+        state.difficulty,
+      )
+      setState((s) => ({
+        ...s,
+        status: 'reviewing',
+        result,
+        score: {
+          correct: s.score.correct + (result.correct ? 1 : 0),
+          total: s.score.total + 1,
+        },
       }))
+    } catch (err) {
+      setState((s) => ({ ...s, status: 'active', error: err.message }))
+    }
+  }, [state.question, state.domain, state.difficulty])
 
-      const correctCount = answerRecords.filter((a) => a.is_correct).length
-      const session = {
-        session_id: `session-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        total: s.questions.length,
-        correct: correctCount,
-        score_pct: Math.round((correctCount / s.questions.length) * 100),
-        answers: answerRecords,
-        topic_filter: topicFilter || null,
-        difficulty_filter: difficultyFilter || null,
-      }
+  const next = useCallback(async () => {
+    setState((s) => ({ ...s, status: 'loading', question: null, result: null, error: null }))
+    try {
+      const question = await fetchQuestion(state.domain, state.difficulty)
+      setState((s) => ({ ...s, status: 'active', question }))
+    } catch (err) {
+      setState((s) => ({ ...s, status: 'reviewing', error: err.message }))
+    }
+  }, [state.domain, state.difficulty])
 
-      saveScore(session).catch(console.error)
-
-      return { ...s, status: 'finished', session }
-    })
+  const finish = useCallback(() => {
+    setState((s) => ({ ...s, status: 'finished' }))
   }, [])
 
   const reset = useCallback(() => {
     setState(initialState)
   }, [])
 
-  const currentQuestion = state.questions[state.currentIndex] || null
-  const isAnswered = currentQuestion ? state.answers[currentQuestion.id] != null : false
-  const isLast = state.currentIndex === state.questions.length - 1
+  const hydrate = useCallback((saved) => {
+    setState({
+      ...initialState,
+      status: saved.status,
+      question: saved.question,
+      result: saved.result,
+      score: saved.score,
+      domain: saved.domain,
+      difficulty: saved.difficulty,
+    })
+  }, [])
 
   return {
     ...state,
-    currentQuestion,
-    isAnswered,
-    isLast,
     start,
     answer,
     next,
-    prev,
-    submit,
+    finish,
     reset,
+    hydrate,
   }
 }
