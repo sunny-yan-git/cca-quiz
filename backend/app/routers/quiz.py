@@ -15,6 +15,7 @@ async def generate_question(req: QuestionRequest):
             domain=req.domain,
             difficulty=req.difficulty.value,
             exam_guide_content=exam_guide,
+            subdomain=getattr(req, "subdomain", None),
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -32,6 +33,7 @@ async def generate_question(req: QuestionRequest):
     return QuestionResponse(
         id=question.id,
         domain=question.domain,
+        subdomain=question.subdomain,
         scenario=question.scenario,
         difficulty=question.difficulty,
         scenario_context=question.scenario_context,

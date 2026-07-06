@@ -18,6 +18,7 @@ class AnswerOption(BaseModel):
 class Question(BaseModel):
     id: str
     domain: str
+    subdomain: Optional[str] = None
     scenario: str
     difficulty: DifficultyLevel
     scenario_context: str
@@ -36,6 +37,7 @@ class QuestionRequest(BaseModel):
 class QuestionResponse(BaseModel):
     id: str
     domain: str
+    subdomain: Optional[str] = None
     scenario: str
     difficulty: DifficultyLevel
     scenario_context: str

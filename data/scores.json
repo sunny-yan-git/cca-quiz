@@ -97,5 +97,14 @@
     "difficulty": "medium",
     "selected_answer": "B",
     "correct": true
+  },
+  {
+    "session_id": "c835960a-db94-4012-8696-ea82ff4429f9",
+    "timestamp": "2026-07-06T19:06:48.786972+00:00",
+    "question_id": "gen-28802dea",
+    "domain": "general",
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
   }
 ]
