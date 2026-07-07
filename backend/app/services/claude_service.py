@@ -10,6 +10,53 @@ from app.models.question import AnswerOption, DifficultyLevel, Question
 
 _client = anthropic.AsyncAnthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
+SUBDOMAINS: dict[str, list[str]] = {
+    "agentic-architecture": [
+        "1.1-agentic-loops",
+        "1.2-multi-agent-orchestration",
+        "1.3-subagent-context-passing",
+        "1.4-workflow-enforcement",
+        "1.5-agent-sdk-hooks",
+        "1.6-task-decomposition",
+        "1.7-session-state-resumption",
+    ],
+    "tool-design-mcp": [
+        "2.1-tool-interface-design",
+        "2.2-structured-error-responses",
+        "2.3-tool-distribution-choice",
+        "2.4-mcp-server-integration",
+        "2.5-builtin-tools",
+    ],
+    "claude-code-config": [
+        "3.1-claude-md-hierarchy",
+        "3.2-custom-commands-skills",
+        "3.3-plan-mode-direct-execution",
+        "3.4-iterative-refinement",
+        "3.5-ci-cd-integration",
+    ],
+    "prompt-engineering": [
+        "4.1-structured-output-tool-use",
+        "4.2-few-shot-prompting",
+        "4.3-prompt-chaining",
+        "4.4-false-positive-reduction",
+        "4.5-extraction-patterns",
+        "4.6-multi-instance-review",
+    ],
+    "context-management": [
+        "5.1-context-window-optimization",
+        "5.2-progressive-summarization",
+        "5.3-prompt-caching-awareness",
+        "5.4-message-batches-api",
+        "5.5-confidence-scoring",
+        "5.6-information-provenance",
+    ],
+}
+
+
+def get_subdomains_for_domain(domain: str) -> list[str]:
+    """Return the list of subdomain slugs for a given domain slug."""
+    return SUBDOMAINS.get(domain, [])
+
 _SYSTEM_PROMPT = """\
 You are an expert question author for the Claude Certified Architect – Foundations (CCA-F) exam.
 
@@ -106,6 +153,8 @@ async def generate_question(
         )
     elif domain:
         generation_instruction += "\nChoose any subdomain within this domain."
+
+    print(f"DEBUG generation instruction: {generation_instruction}")
 
     user_content = f"{exam_guide_content}\n\n---\n\n{generation_instruction}"
 

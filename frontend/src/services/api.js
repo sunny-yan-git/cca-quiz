@@ -44,7 +44,7 @@ export function submitAnswer(questionId, selectedAnswer, domain, difficulty) {
       question_id: questionId,
       session_id: getSessionId(),
       selected_answer: selectedAnswer,
-      domain: domain || 'general',
+      domain: domain || null,
       difficulty,
     }),
   })

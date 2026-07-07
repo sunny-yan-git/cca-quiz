@@ -10,6 +10,7 @@ class AnswerRequest(BaseModel):
     session_id: str
     selected_answer: str
     domain: Optional[str] = None
+    subdomain: Optional[str] = None
     difficulty: DifficultyLevel
 
 
@@ -27,10 +28,18 @@ class DomainScore(BaseModel):
     accuracy: float
 
 
+class SubdomainScore(BaseModel):
+    subdomain: str
+    correct: int
+    total: int
+    accuracy: float
+
+
 class SessionScore(BaseModel):
     session_id: str
     timestamp: str
     domain_scores: Dict[str, DomainScore]
+    subdomain_scores: Dict[str, SubdomainScore] = {}
     questions_answered: int
 
 

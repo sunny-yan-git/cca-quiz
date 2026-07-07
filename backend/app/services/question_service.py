@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Optional
 
 from app.models.question import Question
-from app.models.score import AnswerRequest, DomainScore, ScoresSummary, SessionScore
+from app.models.score import AnswerRequest, DomainScore, ScoresSummary, SessionScore, SubdomainScore
+from app.services.claude_service import SUBDOMAINS
 
 _DATA_DIR = Path(os.getenv("DATA_DIR", "../data"))
 
@@ -39,6 +40,7 @@ def get_random_question(
     domain: Optional[str],
     difficulty: Optional[str],
     exclude_ids: list[str] | None = None,
+    subdomain: Optional[str] = None,
 ) -> Optional[Question]:
     effective_domain = domain
     if effective_domain is None:
@@ -56,6 +58,11 @@ def get_random_question(
     if exclude_ids:
         excluded = set(exclude_ids)
         questions = [q for q in questions if q.id not in excluded]
+
+    if subdomain:
+        subdomain_matches = [q for q in questions if q.subdomain == subdomain]
+        if subdomain_matches:
+            questions = subdomain_matches
 
     if not questions:
         return None
@@ -82,10 +89,15 @@ def read_scores() -> ScoresSummary:
 
     for session_id, answers in sessions_map.items():
         domain_scores: dict[str, DomainScore] = {}
+        subdomain_scores: dict[str, SubdomainScore] = {}
         session_correct: dict[str, int] = {}
         session_total: dict[str, int] = {}
+        session_sub_correct: dict[str, int] = {}
+        session_sub_total: dict[str, int] = {}
 
         for a in answers:
+            if not a.get("domain") or a.get("domain") not in SUBDOMAINS:
+                continue
             d = a["domain"]
             session_correct[d] = session_correct.get(d, 0) + (1 if a["correct"] else 0)
             session_total[d] = session_total.get(d, 0) + 1
@@ -93,6 +105,11 @@ def read_scores() -> ScoresSummary:
             domain_total[d] = domain_total.get(d, 0) + 1
             all_correct += 1 if a["correct"] else 0
             all_total += 1
+
+            sd = a.get("subdomain")
+            if sd:
+                session_sub_correct[sd] = session_sub_correct.get(sd, 0) + (1 if a["correct"] else 0)
+                session_sub_total[sd] = session_sub_total.get(sd, 0) + 1
 
         for d in session_total:
             c = session_correct.get(d, 0)
@@ -104,12 +121,23 @@ def read_scores() -> ScoresSummary:
                 accuracy=round(c / t, 4) if t else 0.0,
             )
 
+        for sd in session_sub_total:
+            c = session_sub_correct.get(sd, 0)
+            t = session_sub_total[sd]
+            subdomain_scores[sd] = SubdomainScore(
+                subdomain=sd,
+                correct=c,
+                total=t,
+                accuracy=round(c / t, 4) if t else 0.0,
+            )
+
         timestamp = answers[0].get("timestamp", "")
         sessions.append(
             SessionScore(
                 session_id=session_id,
                 timestamp=timestamp,
                 domain_scores=domain_scores,
+                subdomain_scores=subdomain_scores,
                 questions_answered=len(answers),
             )
         )
@@ -150,6 +178,7 @@ def write_answer_result(
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "question_id": answer_request.question_id,
             "domain": answer_request.domain,
+            "subdomain": answer_request.subdomain,
             "difficulty": answer_request.difficulty.value,
             "selected_answer": answer_request.selected_answer,
             "correct": correct,
@@ -157,3 +186,36 @@ def write_answer_result(
     )
 
     path.write_text(json.dumps(records, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def get_target_subdomain(domain: str | None) -> tuple[str | None, str | None]:
+    """
+    Returns (target_domain, target_subdomain) based on session history.
+    Picks the least-recently-covered subdomain within the requested domain.
+    If no domain specified, picks weakest domain first.
+    """
+    if domain and domain not in SUBDOMAINS:
+        domain = None
+
+    scores = read_scores()
+
+    if domain is None:
+        if scores.weakest_domain:
+            domain = scores.weakest_domain
+        else:
+            domain = random.choice(list(SUBDOMAINS.keys()))
+
+    subdomains = SUBDOMAINS.get(domain, [])
+    if not subdomains:
+        return domain, None
+
+    subdomain_counts: dict[str, int] = {s: 0 for s in subdomains}
+    for session in scores.sessions:
+        for sd, sd_score in session.subdomain_scores.items():
+            if sd in subdomain_counts:
+                subdomain_counts[sd] += sd_score.total
+
+    min_count = min(subdomain_counts.values())
+    least_seen = [sd for sd, count in subdomain_counts.items() if count == min_count]
+
+    return domain, random.choice(least_seen)
