@@ -5,8 +5,11 @@ from app.services import claude_service, question_service
 from app.services.question_service import (
     cache_question,
     clear_buffered_question,
+    clear_served_questions,
     get_buffered_question,
+    get_served_question_ids,
     get_target_subdomain,
+    mark_question_served,
     prefetch_next_question,
 )
 
@@ -40,6 +43,7 @@ async def generate_question(req: QuestionRequest, background_tasks: BackgroundTa
             question = question_service.get_random_question(
                 domain=target_domain,
                 difficulty=req.difficulty.value,
+                exclude_ids=list(get_served_question_ids(req.session_id)),
                 subdomain=target_subdomain,
             )
 
@@ -47,6 +51,7 @@ async def generate_question(req: QuestionRequest, background_tasks: BackgroundTa
             raise HTTPException(status_code=503, detail="No questions available")
 
     cache_question(question)
+    mark_question_served(req.session_id, question.id)
 
     background_tasks.add_task(
         prefetch_next_question,
@@ -71,6 +76,7 @@ async def generate_question(req: QuestionRequest, background_tasks: BackgroundTa
 @router.post("/clear-session")
 async def clear_session(req: ClearSessionRequest):
     clear_buffered_question(req.session_id)
+    clear_served_questions(req.session_id)
     print(f"DEBUG buffer cleared for session {req.session_id[:8]}")
     return {"status": "cleared"}
 

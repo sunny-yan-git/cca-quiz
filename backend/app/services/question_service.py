@@ -16,6 +16,24 @@ _question_cache: dict[str, Question] = {}
 # Session-scoped question buffer: session_id → pre-generated Question
 _question_buffer: dict[str, Question] = {}
 
+# Session-scoped served-question tracker: session_id → set of served question IDs
+_served_questions: dict[str, set[str]] = {}
+
+
+def mark_question_served(session_id: str, question_id: str) -> None:
+    """Record that a question has been served in this session."""
+    _served_questions.setdefault(session_id, set()).add(question_id)
+
+
+def get_served_question_ids(session_id: str) -> set[str]:
+    """Return set of question IDs already served in this session."""
+    return _served_questions.get(session_id, set())
+
+
+def clear_served_questions(session_id: str) -> None:
+    """Clear served question history when a session ends or resets."""
+    _served_questions.pop(session_id, None)
+
 
 def cache_question(question: Question) -> None:
     _question_cache[question.id] = question

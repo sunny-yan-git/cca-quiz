@@ -58,5 +58,85 @@
     "difficulty": "medium",
     "selected_answer": "A",
     "correct": false
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T16:49:16.828567+00:00",
+    "question_id": "gen-b07552a6",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T16:50:45.092182+00:00",
+    "question_id": "gen-4b4e7896",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "D",
+    "correct": false
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T16:53:13.975263+00:00",
+    "question_id": "gen-d795d76e",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T16:55:11.319714+00:00",
+    "question_id": "gen-a9c5ad34",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "C",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T17:00:08.906257+00:00",
+    "question_id": "gen-a6afee9f",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T19:39:55.544934+00:00",
+    "question_id": "gen-c2378c69",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T19:40:43.351659+00:00",
+    "question_id": "gen-3296f0dc",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T19:42:02.411048+00:00",
+    "question_id": "gen-a7b7c102",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
   }
 ]
