@@ -13,9 +13,27 @@ _DATA_DIR = Path(os.getenv("DATA_DIR", "../data"))
 
 _question_cache: dict[str, Question] = {}
 
+# Session-scoped question buffer: session_id → pre-generated Question
+_question_buffer: dict[str, Question] = {}
+
 
 def cache_question(question: Question) -> None:
     _question_cache[question.id] = question
+
+
+def store_buffered_question(session_id: str, question: Question) -> None:
+    """Store a pre-generated question for a session."""
+    _question_buffer[session_id] = question
+
+
+def get_buffered_question(session_id: str) -> Optional[Question]:
+    """Retrieve and remove the buffered question for a session."""
+    return _question_buffer.pop(session_id, None)
+
+
+def clear_buffered_question(session_id: str) -> None:
+    """Discard the buffered question when session settings change."""
+    _question_buffer.pop(session_id, None)
 
 
 def _path(filename: str) -> Path:
@@ -219,3 +237,32 @@ def get_target_subdomain(domain: str | None) -> tuple[str | None, str | None]:
     least_seen = [sd for sd, count in subdomain_counts.items() if count == min_count]
 
     return domain, random.choice(least_seen)
+
+
+async def prefetch_next_question(
+    session_id: str,
+    domain: Optional[str],
+    difficulty: str,
+    exam_guide: str,
+) -> None:
+    """
+    Pre-generate the next question and store in buffer.
+    Called as a background task after serving each question.
+    Failures are silently swallowed — buffer misses fall back
+    to normal generation gracefully.
+    """
+    from app.services.claude_service import generate_question
+
+    try:
+        target_domain, target_subdomain = get_target_subdomain(domain)
+        question = await generate_question(
+            domain=target_domain,
+            difficulty=difficulty,
+            exam_guide_content=exam_guide,
+            subdomain=target_subdomain,
+        )
+        if question:
+            store_buffered_question(session_id, question)
+            print(f"DEBUG buffer → pre-generated {question.id} for session {session_id[:8]}")
+    except Exception as exc:
+        print(f"DEBUG buffer prefetch failed: {exc}")

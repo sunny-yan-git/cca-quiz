@@ -116,9 +116,15 @@ Scenario slugs: customer-support, code-generation, multi-agent-research, develop
 def _parse_question(text: str) -> Optional[Question]:
     """Extract and parse a JSON Question from a model response string."""
     stripped = text.strip()
-    if stripped.startswith("```"):
-        lines = stripped.splitlines()
-        stripped = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+
+    # Remove markdown code fences anywhere in the response
+    # Handles ```json...``` and ```...``` wrapping
+    if "```" in stripped:
+        # Extract content between first { and last }
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            stripped = stripped[start:end + 1]
 
     try:
         data = json.loads(stripped)
@@ -156,16 +162,35 @@ async def generate_question(
 
     print(f"DEBUG generation instruction: {generation_instruction}")
 
-    user_content = f"{exam_guide_content}\n\n---\n\n{generation_instruction}"
-
     async def _call() -> str:
         response = await _client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=2000,
             system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_content}],
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": exam_guide_content,
+                            "cache_control": {"type": "ephemeral"},
+                        },
+                        {
+                            "type": "text",
+                            "text": generation_instruction,
+                        },
+                    ],
+                }
+            ],
         )
-        print(f"DEBUG stop_reason: {response.stop_reason}, tokens used: {response.usage}")
+        print(
+            f"DEBUG stop_reason: {response.stop_reason}, "
+            f"input_tokens: {response.usage.input_tokens}, "
+            f"cache_creation: {response.usage.cache_creation_input_tokens}, "
+            f"cache_read: {response.usage.cache_read_input_tokens}, "
+            f"output_tokens: {response.usage.output_tokens}"
+        )
         return response.content[0].text
 
     try:

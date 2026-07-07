@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchTopics, fetchScores } from '../services/api'
+import { fetchTopics, fetchScores, clearSession, getSessionId } from '../services/api'
 
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 
@@ -31,9 +31,16 @@ export default function HomePage() {
       ? Math.round(scores.overall_accuracy * 100)
       : null
 
-  function handleStart() {
+  async function handleStart() {
     const effectiveDomain =
       domain === 'adaptive' ? (scores?.weakest_domain ?? null) : domain || null
+
+    try {
+      await clearSession(getSessionId())
+    } catch (err) {
+      console.error(err)
+    }
+
     navigate('/quiz', { state: { domain: effectiveDomain, difficulty, count } })
   }
 

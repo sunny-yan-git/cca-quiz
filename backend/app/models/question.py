@@ -34,6 +34,10 @@ class QuestionRequest(BaseModel):
     session_id: str
 
 
+class ClearSessionRequest(BaseModel):
+    session_id: str
+
+
 class QuestionResponse(BaseModel):
     id: str
     domain: str

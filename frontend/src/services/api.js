@@ -1,6 +1,6 @@
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
-function getSessionId() {
+export function getSessionId() {
   const key = 'quiz_session_id'
   let id = sessionStorage.getItem(key)
   if (!id) {
@@ -56,4 +56,11 @@ export function fetchScores() {
 
 export function fetchTopics() {
   return request('/quiz/topics')
+}
+
+export function clearSession(sessionId) {
+  return request('/quiz/clear-session', {
+    method: 'POST',
+    body: JSON.stringify({ session_id: sessionId }),
+  })
 }
