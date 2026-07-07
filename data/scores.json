@@ -138,5 +138,75 @@
     "difficulty": "medium",
     "selected_answer": "B",
     "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T19:57:12.855519+00:00",
+    "question_id": "gen-2bd17489",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T19:58:18.461821+00:00",
+    "question_id": "gen-bdd0b017",
+    "domain": null,
+    "subdomain": null,
+    "difficulty": "medium",
+    "selected_answer": "C",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T20:16:12.337900+00:00",
+    "question_id": "gen-c41b5713",
+    "domain": "claude-code-config",
+    "subdomain": "3.3-plan-mode-direct-execution",
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T20:18:23.957714+00:00",
+    "question_id": "gen-35849826",
+    "domain": "claude-code-config",
+    "subdomain": "3.1-claude-md-hierarchy",
+    "difficulty": "medium",
+    "selected_answer": "B",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T20:22:04.716631+00:00",
+    "question_id": "gen-81bc1ac4",
+    "domain": "claude-code-config",
+    "subdomain": "3.1-claude-md-hierarchy",
+    "difficulty": "medium",
+    "selected_answer": "C",
+    "correct": true
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T20:23:18.449601+00:00",
+    "question_id": "gen-79db2df8",
+    "domain": "claude-code-config",
+    "subdomain": "3.2-custom-commands-skills",
+    "difficulty": "medium",
+    "selected_answer": "A",
+    "correct": false
+  },
+  {
+    "session_id": "a9e79caa-ea17-4b52-85e5-30ad555709ba",
+    "timestamp": "2026-07-07T20:23:48.602743+00:00",
+    "question_id": "gen-0b3b72a6",
+    "domain": "claude-code-config",
+    "subdomain": "3.5-ci-cd-integration",
+    "difficulty": "medium",
+    "selected_answer": "D",
+    "correct": false
   }
 ]

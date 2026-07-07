@@ -22,12 +22,8 @@ async def generate_question(req: QuestionRequest, background_tasks: BackgroundTa
 
     question = get_buffered_question(req.session_id)
 
-    if question:
-        print(f"DEBUG buffer hit → serving {question.id} instantly")
-    else:
-        print("DEBUG buffer miss → generating on demand")
+    if not question:
         target_domain, target_subdomain = get_target_subdomain(req.domain)
-        print(f"DEBUG rotation → domain: {target_domain}, subdomain: {target_subdomain}")
 
         try:
             question = await claude_service.generate_question(
@@ -77,7 +73,6 @@ async def generate_question(req: QuestionRequest, background_tasks: BackgroundTa
 async def clear_session(req: ClearSessionRequest):
     clear_buffered_question(req.session_id)
     clear_served_questions(req.session_id)
-    print(f"DEBUG buffer cleared for session {req.session_id[:8]}")
     return {"status": "cleared"}
 
 

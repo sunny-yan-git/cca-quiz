@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 from datetime import datetime, timezone
@@ -8,6 +9,8 @@ from typing import Optional
 from app.models.question import Question
 from app.models.score import AnswerRequest, DomainScore, ScoresSummary, SessionScore, SubdomainScore
 from app.services.claude_service import SUBDOMAINS
+
+logger = logging.getLogger(__name__)
 
 _DATA_DIR = Path(os.getenv("DATA_DIR", "../data"))
 
@@ -201,7 +204,11 @@ def read_scores() -> ScoresSummary:
 
 
 def write_answer_result(
-    session_id: str, answer_request: AnswerRequest, correct: bool
+    session_id: str,
+    answer_request: AnswerRequest,
+    correct: bool,
+    domain: str | None = None,
+    subdomain: str | None = None,
 ) -> None:
     path = _path("scores.json")
     records: list[dict] = []
@@ -213,8 +220,8 @@ def write_answer_result(
             "session_id": session_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "question_id": answer_request.question_id,
-            "domain": answer_request.domain,
-            "subdomain": answer_request.subdomain,
+            "domain": domain or answer_request.domain,
+            "subdomain": subdomain or answer_request.subdomain,
             "difficulty": answer_request.difficulty.value,
             "selected_answer": answer_request.selected_answer,
             "correct": correct,
@@ -281,6 +288,5 @@ async def prefetch_next_question(
         )
         if question:
             store_buffered_question(session_id, question)
-            print(f"DEBUG buffer → pre-generated {question.id} for session {session_id[:8]}")
-    except Exception as exc:
-        print(f"DEBUG buffer prefetch failed: {exc}")
+    except Exception:
+        logger.exception("Buffer prefetch failed for session %s", session_id[:8])

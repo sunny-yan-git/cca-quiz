@@ -13,7 +13,13 @@ async def submit_answer(req: AnswerRequest):
         raise HTTPException(status_code=404, detail=f"Question '{req.question_id}' not found.")
 
     correct = req.selected_answer == question.correct_answer
-    question_service.write_answer_result(req.session_id, req, correct)
+    question_service.write_answer_result(
+        req.session_id,
+        req,
+        correct,
+        domain=question.domain,
+        subdomain=question.subdomain,
+    )
 
     return AnswerResult(
         correct=correct,

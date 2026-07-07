@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import uuid
 from pathlib import Path
@@ -7,6 +8,8 @@ from typing import Optional
 import anthropic
 
 from app.models.question import AnswerOption, DifficultyLevel, Question
+
+logger = logging.getLogger(__name__)
 
 _client = anthropic.AsyncAnthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
@@ -128,9 +131,7 @@ def _parse_question(text: str) -> Optional[Question]:
 
     try:
         data = json.loads(stripped)
-    except json.JSONDecodeError as e:
-        print(f"DEBUG JSON parse failed: {e} — response length: {len(stripped)} chars")
-        print(f"DEBUG response tail: ...{stripped[-200:]}")
+    except json.JSONDecodeError:
         return None
 
     try:
@@ -160,8 +161,6 @@ async def generate_question(
     elif domain:
         generation_instruction += "\nChoose any subdomain within this domain."
 
-    print(f"DEBUG generation instruction: {generation_instruction}")
-
     async def _call() -> str:
         response = await _client.messages.create(
             model="claude-sonnet-4-6",
@@ -184,12 +183,14 @@ async def generate_question(
                 }
             ],
         )
-        print(
-            f"DEBUG stop_reason: {response.stop_reason}, "
-            f"input_tokens: {response.usage.input_tokens}, "
-            f"cache_creation: {response.usage.cache_creation_input_tokens}, "
-            f"cache_read: {response.usage.cache_read_input_tokens}, "
-            f"output_tokens: {response.usage.output_tokens}"
+        logger.debug(
+            "Generation complete — stop_reason: %s, input: %d, "
+            "cache_creation: %d, cache_read: %d, output: %d",
+            response.stop_reason,
+            response.usage.input_tokens,
+            response.usage.cache_creation_input_tokens,
+            response.usage.cache_read_input_tokens,
+            response.usage.output_tokens,
         )
         return response.content[0].text
 
